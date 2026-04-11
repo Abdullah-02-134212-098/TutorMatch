@@ -17,6 +17,7 @@ app.use('/api/auth', require('./routes/auth'));
 
 app.use('/api/tutors', require('./routes/tutors'));
 
+app.use('/api/leads', require('./routes/leads'));
 // Test route
 app.get('/', (req, res) => {
     res.json({ message: 'TutorMatch PK API running' });
