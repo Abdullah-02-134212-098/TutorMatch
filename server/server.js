@@ -14,10 +14,11 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
-
 app.use('/api/tutors', require('./routes/tutors'));
-
 app.use('/api/leads', require('./routes/leads'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/reviews', require('./routes/reviews'));
 // Test route
 app.get('/', (req, res) => {
     res.json({ message: 'TutorMatch PK API running' });
