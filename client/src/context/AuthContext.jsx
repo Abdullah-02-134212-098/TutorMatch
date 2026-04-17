@@ -1,36 +1,40 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
 
+    // On first load, restore session from localStorage
     useEffect(() => {
-        if (token) {
-            const userData = JSON.parse(localStorage.getItem('user'));
-            setUser(userData);
+        const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+        if (token && savedUser) {
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            }
         }
         setLoading(false);
-    }, [token]);
+    }, []);
 
     const login = (token, userData) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
-        setToken(token);
         setUser(userData);
     };
 
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        setToken(null);
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

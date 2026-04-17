@@ -1,22 +1,65 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import TutorDashboard from './pages/TutorDashboard';
+import Search from './pages/Search';
 import StudentDashboard from './pages/StudentDashboard';
+import TutorDashboard from './pages/TutorDashboard';
+import TutorProfileSetup from './pages/TutorProfileSetup';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={
-          <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <h1 className="text-4xl font-bold text-green-600">TutorMatch PK 🚀</h1>
-          </div>
-        } />
+        {/* Public routes */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/tutor-dashboard" element={<TutorDashboard />} />
-        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/search" element={<Search />} />
+
+        {/* Students only */}
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute role="student">
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Tutors only */}
+        <Route
+          path="/tutor-dashboard"
+          element={
+            <ProtectedRoute role="tutor">
+              <TutorDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tutor-profile-setup"
+          element={
+            <ProtectedRoute role="tutor">
+              <TutorProfileSetup />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin only */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Home />} />
       </Routes>
     </BrowserRouter>
   );
