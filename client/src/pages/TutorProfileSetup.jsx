@@ -11,8 +11,23 @@ const ALL_AREAS = [
     'Rawalpindi (All Areas)', 'Hyderabad (All Areas)',
 ];
 
-// CNIC format: 42201-1234567-1
-const CNIC_REGEX = /^\d{5}-\d{7}-\d{1}$/;
+// Pakistani highest qualifications
+const QUALIFICATIONS = [
+    'Matric (SSC)',
+    'Intermediate (FA / FSc / ICS / ICOM)',
+    'O Level',
+    'A Level',
+    "Bachelor's (BA / BSc / BBA / BCS)",
+    'BS / BE (4-year)',
+    'MBBS / BDS',
+    "Master's (MA / MSc / MBA / MCS)",
+    'MPhil',
+    'PhD',
+    'Other',
+];
+
+// CNIC: 42201-1234567-1 (5 digits - 7 digits - 1 digit)
+const CNIC_REGEX = /^\d{5}-\d{7}-\d$/;
 
 // ── Reusable MultiSelect ───────────────────────────────────────────────────────
 const MultiSelect = ({ label, options, selected, onChange, cols = 3, hint }) => {
@@ -66,7 +81,6 @@ const MultiSelect = ({ label, options, selected, onChange, cols = 3, hint }) => 
                     </label>
                 ))}
             </div>
-            {selected.length === 0 && <p className="text-xs text-red-400 mt-1">Select at least one</p>}
         </div>
     );
 };
@@ -89,9 +103,9 @@ const TutorProfileSetup = () => {
         areas: [],
         feeMin: '',
         feeMax: '',
-        experience: '',   // years of experience
-        qualification: '',   // e.g. "BS Computer Science"
-        teachingMode: 'home',  // home | online | both
+        experience: '',
+        qualification: '',
+        teachingMode: 'home',
         bio: '',
         cnic: '',
         photo: '',
@@ -108,7 +122,7 @@ const TutorProfileSetup = () => {
                     areas: t.areas || [],
                     feeMin: t.feeRange?.min ?? '',
                     feeMax: t.feeRange?.max ?? '',
-                    experience: t.experience || '',
+                    experience: t.experience ?? '',
                     qualification: t.qualification || '',
                     teachingMode: t.teachingMode || 'home',
                     bio: t.bio || '',
@@ -123,18 +137,29 @@ const TutorProfileSetup = () => {
 
     const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
+    // CNIC auto-formatter: strips non-digits, inserts hyphens at correct positions
+    const handleCnic = (raw) => {
+        const digits = raw.replace(/\D/g, '').slice(0, 13);
+        let formatted = digits;
+        if (digits.length > 5) formatted = digits.slice(0, 5) + '-' + digits.slice(5);
+        if (digits.length > 12) formatted = digits.slice(0, 5) + '-' + digits.slice(5, 12) + '-' + digits.slice(12);
+        set('cnic', formatted);
+        setErrors(er => ({ ...er, cnic: '' }));
+    };
+
     const validate = () => {
         const e = {};
         if (form.subjects.length === 0) e.subjects = 'Select at least one subject';
         if (form.boards.length === 0) e.boards = 'Select at least one board';
         if (form.levels.length === 0) e.levels = 'Select at least one level';
         if (form.areas.length === 0) e.areas = 'Select at least one area';
-        if (!form.feeMin || isNaN(form.feeMin)) e.feeMin = 'Enter a valid minimum fee';
-        if (!form.feeMax || isNaN(form.feeMax)) e.feeMax = 'Enter a valid maximum fee';
+        if (!form.feeMin || isNaN(form.feeMin) || Number(form.feeMin) < 1) e.feeMin = 'Enter a valid minimum fee (min Rs. 1)';
+        if (!form.feeMax || isNaN(form.feeMax) || Number(form.feeMax) < 1) e.feeMax = 'Enter a valid maximum fee';
         if (Number(form.feeMin) >= Number(form.feeMax)) e.feeMax = 'Max must be greater than min';
         if (!CNIC_REGEX.test(form.cnic)) e.cnic = 'Format: 42201-1234567-1';
-        if (!form.qualification.trim()) e.qualification = 'Enter your qualification';
-        if (!form.experience && form.experience !== 0) e.experience = 'Enter years of experience';
+        if (!form.qualification) e.qualification = 'Select your highest qualification';
+        if (form.experience === '' || form.experience === null) e.experience = 'Enter years of experience (0 if new)';
+        if (Number(form.experience) < 0) e.experience = 'Experience cannot be negative';
         return e;
     };
 
@@ -168,15 +193,6 @@ const TutorProfileSetup = () => {
             setErrors({ submit: err.response?.data?.message || 'Failed to save profile' });
         }
         setSaving(false);
-    };
-
-    // CNIC auto-formatter
-    const handleCnic = (raw) => {
-        const digits = raw.replace(/\D/g, '').slice(0, 13);
-        let formatted = digits;
-        if (digits.length > 5) formatted = digits.slice(0, 5) + '-' + digits.slice(5);
-        if (digits.length > 12) formatted = formatted.slice(0, 13) + '-' + digits.slice(12);
-        set('cnic', formatted);
     };
 
     if (loading) return (
@@ -219,7 +235,7 @@ const TutorProfileSetup = () => {
 
                 {!isEdit && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-5 text-sm text-yellow-800">
-                        📋 Your CNIC is used for verification only and will never be shown publicly.
+                        📋 Your CNIC is used for identity verification only and will never be shown publicly.
                     </div>
                 )}
 
@@ -230,29 +246,32 @@ const TutorProfileSetup = () => {
                         </div>
                     )}
 
-                    {/* ── Qualification & Experience ── */}
+                    {/* Qualification & Experience */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                         <div>
                             <label className="block text-gray-700 font-medium text-sm mb-1">
-                                Qualification *
+                                Highest Qualification *
                             </label>
-                            <input
-                                type="text"
-                                placeholder="e.g. BS Computer Science"
+                            <select
                                 className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${errors.qualification ? 'border-red-400' : 'border-gray-300'}`}
                                 value={form.qualification}
                                 onChange={e => { set('qualification', e.target.value); setErrors(er => ({ ...er, qualification: '' })); }}
-                            />
+                            >
+                                <option value="">Select qualification...</option>
+                                {QUALIFICATIONS.map(q => <option key={q} value={q}>{q}</option>)}
+                            </select>
                             <FieldError msg={errors.qualification} />
                         </div>
 
                         <div>
                             <label className="block text-gray-700 font-medium text-sm mb-1">
                                 Years of Experience *
+                                <span className="text-gray-400 font-normal ml-1 text-xs">(enter 0 if new)</span>
                             </label>
                             <input
                                 type="number"
-                                min="0" max="50"
+                                min="0"
+                                max="50"
                                 placeholder="e.g. 3"
                                 className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${errors.experience ? 'border-red-400' : 'border-gray-300'}`}
                                 value={form.experience}
@@ -272,14 +291,7 @@ const TutorProfileSetup = () => {
                                 { val: 'both', label: '🔄 Both' },
                             ].map(({ val, label }) => (
                                 <label key={val} className={`flex-1 flex items-center justify-center gap-1.5 border rounded-lg py-2.5 cursor-pointer text-sm transition ${form.teachingMode === val ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-gray-200 text-gray-600 hover:border-green-300'}`}>
-                                    <input
-                                        type="radio"
-                                        name="teachingMode"
-                                        value={val}
-                                        checked={form.teachingMode === val}
-                                        onChange={() => set('teachingMode', val)}
-                                        className="sr-only"
-                                    />
+                                    <input type="radio" name="teachingMode" value={val} checked={form.teachingMode === val} onChange={() => set('teachingMode', val)} className="sr-only" />
                                     {label}
                                 </label>
                             ))}
@@ -287,64 +299,41 @@ const TutorProfileSetup = () => {
                     </div>
 
                     {/* Subjects */}
-                    <MultiSelect
-                        label="Subjects You Teach *"
-                        options={ALL_SUBJECTS}
-                        selected={form.subjects}
-                        onChange={v => { set('subjects', v); setErrors(e => ({ ...e, subjects: '' })); }}
-                        cols={3}
-                    />
+                    <MultiSelect label="Subjects You Teach *" options={ALL_SUBJECTS} selected={form.subjects} onChange={v => { set('subjects', v); setErrors(e => ({ ...e, subjects: '' })); }} cols={3} />
                     <FieldError msg={errors.subjects} />
 
                     {/* Boards */}
-                    <MultiSelect
-                        label="Boards You Cover *"
-                        options={BOARDS}
-                        selected={form.boards}
-                        onChange={v => { set('boards', v); setErrors(e => ({ ...e, boards: '' })); }}
-                        cols={4}
-                    />
+                    <MultiSelect label="Boards You Cover *" options={BOARDS} selected={form.boards} onChange={v => { set('boards', v); setErrors(e => ({ ...e, boards: '' })); }} cols={4} />
                     <FieldError msg={errors.boards} />
 
                     {/* Levels */}
-                    <MultiSelect
-                        label="Class Levels You Teach *"
-                        options={ALL_LEVELS}
-                        selected={form.levels}
-                        onChange={v => { set('levels', v); setErrors(e => ({ ...e, levels: '' })); }}
-                        cols={2}
-                    />
+                    <MultiSelect label="Class Levels You Teach *" options={ALL_LEVELS} selected={form.levels} onChange={v => { set('levels', v); setErrors(e => ({ ...e, levels: '' })); }} cols={2} />
                     <FieldError msg={errors.levels} />
 
                     {/* Areas */}
-                    <MultiSelect
-                        label="Areas You Travel To *"
-                        hint="(students search by area)"
-                        options={ALL_AREAS}
-                        selected={form.areas}
-                        onChange={v => { set('areas', v); setErrors(e => ({ ...e, areas: '' })); }}
-                        cols={2}
-                    />
+                    <MultiSelect label="Areas You Travel To *" hint="(students search by area)" options={ALL_AREAS} selected={form.areas} onChange={v => { set('areas', v); setErrors(e => ({ ...e, areas: '' })); }} cols={2} />
                     <FieldError msg={errors.areas} />
 
                     {/* Fee Range */}
                     <div className="mb-5">
                         <label className="block text-gray-700 font-medium text-sm mb-1">Monthly Fee Range (Rs.) *</label>
-                        <div className="flex gap-3 items-center">
+                        <div className="flex gap-3 items-start">
                             <div className="flex-1">
                                 <input
                                     type="number"
+                                    min="1"
                                     placeholder="Min e.g. 3000"
                                     className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${errors.feeMin ? 'border-red-400' : 'border-gray-300'}`}
                                     value={form.feeMin}
-                                    onChange={e => { set('feeMin', e.target.value); setErrors(er => ({ ...er, feeMin: '' })); }}
+                                    onChange={e => { set('feeMin', e.target.value); setErrors(er => ({ ...er, feeMin: '', feeMax: '' })); }}
                                 />
                                 <FieldError msg={errors.feeMin} />
                             </div>
-                            <span className="text-gray-400 text-sm">to</span>
+                            <span className="text-gray-400 text-sm pt-3">to</span>
                             <div className="flex-1">
                                 <input
                                     type="number"
+                                    min="1"
                                     placeholder="Max e.g. 8000"
                                     className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${errors.feeMax ? 'border-red-400' : 'border-gray-300'}`}
                                     value={form.feeMax}
@@ -362,10 +351,11 @@ const TutorProfileSetup = () => {
                         </label>
                         <input
                             type="text"
+                            inputMode="numeric"
                             placeholder="42201-1234567-1"
                             className={`w-full border rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-400 ${errors.cnic ? 'border-red-400' : 'border-gray-300'}`}
                             value={form.cnic}
-                            onChange={e => { handleCnic(e.target.value); setErrors(er => ({ ...er, cnic: '' })); }}
+                            onChange={e => handleCnic(e.target.value)}
                             maxLength={15}
                         />
                         <FieldError msg={errors.cnic} />
@@ -382,7 +372,7 @@ const TutorProfileSetup = () => {
                         <textarea
                             rows={4}
                             placeholder="Describe your teaching experience, approach, and why students should choose you..."
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
                             value={form.bio}
                             onChange={e => set('bio', e.target.value)}
                             maxLength={500}
@@ -393,7 +383,7 @@ const TutorProfileSetup = () => {
                     {/* Photo URL */}
                     <div className="mb-6">
                         <label className="block text-gray-700 font-medium text-sm mb-1">
-                            Profile Photo URL <span className="text-gray-400 font-normal text-xs">(photo upload coming soon)</span>
+                            Profile Photo URL <span className="text-gray-400 font-normal text-xs">(optional)</span>
                         </label>
                         <input
                             type="url"

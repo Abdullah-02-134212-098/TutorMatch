@@ -8,6 +8,7 @@ import Search from './pages/Search';
 import StudentDashboard from './pages/StudentDashboard';
 import TutorDashboard from './pages/TutorDashboard';
 import TutorProfileSetup from './pages/TutorProfileSetup';
+import TutorPublicProfile from './pages/TutorPublicProfile';
 import AdminPanel from './pages/AdminPanel';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/tutor/:id" element={<TutorPublicProfile />} />
 
         {/* Students only */}
         <Route

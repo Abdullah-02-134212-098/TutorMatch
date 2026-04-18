@@ -8,7 +8,9 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: ['student', 'tutor', 'admin'], required: true },
     city: { type: String, default: 'Karachi' },
     isVerified: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    resetOtp: { type: String },
+    resetOtpExpiry: { type: Date },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);

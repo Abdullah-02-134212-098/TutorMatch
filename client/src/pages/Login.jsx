@@ -198,7 +198,7 @@ const Login = () => {
             login(res.data.token, { name: res.data.name, role: res.data.role, id: res.data.id });
             if (res.data.role === 'admin') navigate('/admin');
             else if (res.data.role === 'tutor') navigate('/tutor-dashboard');
-            else navigate('/student-dashboard');
+            else navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed. Check your credentials.');
         }
@@ -275,4 +275,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Login; 

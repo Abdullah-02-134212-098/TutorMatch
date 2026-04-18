@@ -5,6 +5,16 @@ import api from '../services/api';
 
 const CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Hyderabad', 'Faisalabad', 'Multan'];
 
+// ⚠️ Field MUST be defined outside Signup — defining it inside causes re-mount
+//    on every keystroke (React sees a new component type), losing focus after 1 letter.
+const Field = ({ label, error, children }) => (
+    <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
+        {children}
+        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+);
+
 const Signup = () => {
     const [form, setForm] = useState({
         name: '', email: '', password: '', confirmPassword: '',
@@ -19,6 +29,12 @@ const Signup = () => {
     const set = (key, val) => {
         setForm(f => ({ ...f, [key]: val }));
         setErrors(e => ({ ...e, [key]: '' }));
+    };
+
+    // Strip non-digits, enforce Pakistani mobile format
+    const handlePhone = (raw) => {
+        const digits = raw.replace(/\D/g, '').slice(0, 11);
+        set('phone', digits);
     };
 
     const validate = () => {
@@ -43,24 +59,15 @@ const Signup = () => {
             const res = await api.post('/auth/register', payload);
             login(res.data.token, { name: res.data.name, role: res.data.role, id: res.data.id });
             if (res.data.role === 'tutor') navigate('/tutor-profile-setup');
-            else navigate('/student-dashboard');
+            else navigate('/');
         } catch (err) {
             setServerError(err.response?.data?.message || 'Signup failed. Please try again.');
         }
         setLoading(false);
     };
 
-    const Field = ({ label, error, children }) => (
-        <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
-            {children}
-            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-        </div>
-    );
-
     const inputClass = (key) =>
-        `w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${errors[key] ? 'border-red-400' : 'border-gray-300'
-        }`;
+        `w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${errors[key] ? 'border-red-400' : 'border-gray-300'}`;
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
@@ -84,6 +91,7 @@ const Signup = () => {
                             placeholder="Ahmed Ali"
                             value={form.name}
                             onChange={(e) => set('name', e.target.value)}
+                            autoComplete="name"
                         />
                     </Field>
 
@@ -94,18 +102,26 @@ const Signup = () => {
                             placeholder="you@example.com"
                             value={form.email}
                             onChange={(e) => set('email', e.target.value)}
+                            autoComplete="email"
                         />
                     </Field>
 
                     <Field label="Phone Number" error={errors.phone}>
                         <input
-                            type="text"
+                            type="tel"
+                            inputMode="numeric"
                             className={inputClass('phone')}
                             placeholder="03001234567"
                             value={form.phone}
-                            onChange={(e) => set('phone', e.target.value)}
+                            onChange={(e) => handlePhone(e.target.value)}
                             maxLength={11}
                         />
+                        {!errors.phone && form.phone.length > 0 && form.phone.length < 11 && (
+                            <p className="text-gray-400 text-xs mt-0.5">{11 - form.phone.length} more digit{11 - form.phone.length !== 1 ? 's' : ''} needed</p>
+                        )}
+                        {!errors.phone && /^03\d{9}$/.test(form.phone) && (
+                            <p className="text-green-600 text-xs mt-0.5">✓ Valid number</p>
+                        )}
                     </Field>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -138,6 +154,7 @@ const Signup = () => {
                             placeholder="Min 6 characters"
                             value={form.password}
                             onChange={(e) => set('password', e.target.value)}
+                            autoComplete="new-password"
                         />
                     </Field>
 
@@ -148,6 +165,7 @@ const Signup = () => {
                             placeholder="Re-enter password"
                             value={form.confirmPassword}
                             onChange={(e) => set('confirmPassword', e.target.value)}
+                            autoComplete="new-password"
                         />
                     </Field>
 

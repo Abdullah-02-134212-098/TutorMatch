@@ -8,6 +8,7 @@ const leadSchema = new mongoose.Schema({
     board: { type: String, required: true },
     level: { type: String, required: true },
     area: { type: String, required: true },
+    address: { type: String, default: '' },
     description: { type: String },
     status: {
         type: String,
@@ -15,7 +16,7 @@ const leadSchema = new mongoose.Schema({
         default: 'open'
     },
     unlockedBy: [{
-        tutorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tutor' },
+        tutorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         paidAt: { type: Date }
     }],
     createdAt: { type: Date, default: Date.now },
@@ -25,4 +26,4 @@ const leadSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Lead', leadSchema);
+module.exports = mongoose.models.Lead || mongoose.model('Lead', leadSchema);
