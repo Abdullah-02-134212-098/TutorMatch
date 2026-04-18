@@ -2,8 +2,7 @@
 
 > Pakistan's trusted home tutor marketplace connecting students with verified tutors across Karachi
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](YOUR_LIVE_URL)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](NOT-LIVE-YET)
 
 ## 📖 Overview
 
