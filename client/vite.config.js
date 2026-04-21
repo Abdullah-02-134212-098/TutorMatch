@@ -8,6 +8,11 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.warn('[proxy] Backend not reachable:', err.code);
+          });
+        },
       }
     }
   }

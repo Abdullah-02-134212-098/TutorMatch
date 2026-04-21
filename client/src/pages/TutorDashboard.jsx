@@ -7,6 +7,8 @@ import api from '../services/api';
 const PaymentModal = ({ lead, onClose, onSuccess }) => {
     const [method, setMethod] = useState('jazzcash');
     const [txnId, setTxnId] = useState('');
+    const [proofImage, setProofImage] = useState(null);   // base64 data URL
+    const [proofFileName, setProofFileName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -16,15 +18,36 @@ const PaymentModal = ({ lead, onClose, onSuccess }) => {
         manual: 'Contact admin at admin@tutormatch.pk',
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Screenshot must be under 5 MB.');
+            return;
+        }
+        setProofFileName(file.name);
+        const reader = new FileReader();
+        reader.onloadend = () => setProofImage(reader.result);
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = async () => {
         if (method !== 'manual' && !txnId.trim()) {
             setError('Please enter your transaction ID.');
             return;
         }
+        if (!proofImage) {
+            setError('Please upload a screenshot of your payment.');
+            return;
+        }
         setLoading(true);
         setError('');
         try {
-            await api.post(`/leads/${lead._id}/unlock`, { method, transactionId: txnId });
+            await api.post(`/leads/${lead._id}/unlock`, {
+                method,
+                transactionId: txnId,
+                proofImage,
+            });
             onSuccess();
         } catch (err) {
             setError(err.response?.data?.message || 'Error submitting payment');
@@ -34,7 +57,7 @@ const PaymentModal = ({ lead, onClose, onSuccess }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto">
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">×</button>
 
                 <h3 className="text-lg font-bold text-gray-800 mb-1">Unlock This Lead</h3>
@@ -83,6 +106,41 @@ const PaymentModal = ({ lead, onClose, onSuccess }) => {
                         />
                     </div>
                 )}
+
+                {/* Payment Screenshot Upload */}
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Payment Screenshot *
+                        <span className="text-gray-400 font-normal ml-1 text-xs">(JPG, PNG, max 5 MB)</span>
+                    </label>
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50 transition">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageChange}
+                        />
+                        {proofImage ? (
+                            <div className="flex items-center gap-2 text-sm text-green-700">
+                                <img src={proofImage} alt="proof" className="h-12 w-12 object-cover rounded" />
+                                <span className="text-xs text-gray-500 truncate max-w-[140px]">{proofFileName}</span>
+                            </div>
+                        ) : (
+                            <div className="text-center">
+                                <p className="text-gray-400 text-sm">📷 Click to upload screenshot</p>
+                                <p className="text-gray-300 text-xs mt-0.5">Take a screenshot of your payment confirmation</p>
+                            </div>
+                        )}
+                    </label>
+                    {proofImage && (
+                        <button
+                            onClick={() => { setProofImage(null); setProofFileName(''); }}
+                            className="text-xs text-red-500 mt-1 hover:underline"
+                        >
+                            Remove image
+                        </button>
+                    )}
+                </div>
 
                 <button
                     onClick={handleSubmit}

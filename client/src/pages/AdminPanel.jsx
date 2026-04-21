@@ -203,8 +203,8 @@ const AllTutorsTab = () => {
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="text-base font-semibold text-gray-800">{tutor.userId?.name}</h3>
                                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tutor.status === 'verified' ? 'bg-green-100 text-green-700' :
-                                                tutor.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                    'bg-yellow-100 text-yellow-700'
+                                            tutor.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                'bg-yellow-100 text-yellow-700'
                                             }`}>
                                             {tutor.status === 'verified' ? '✓ Verified' : tutor.status === 'rejected' ? '✗ Rejected' : 'Pending'}
                                         </span>
@@ -378,6 +378,7 @@ const PendingPaymentsTab = () => {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [acting, setActing] = useState(null);
+    const [viewingImage, setViewingImage] = useState(null); // full-screen image viewer
 
     const fetchPayments = () => {
         setLoading(true);
@@ -422,50 +423,100 @@ const PendingPaymentsTab = () => {
     );
 
     return (
-        <div className="grid gap-4">
-            {payments.map(payment => (
-                <div key={payment._id} className="bg-white rounded-xl shadow-sm p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-base font-semibold text-gray-800">{payment.tutorId?.name}</h3>
-                                <Badge status="pending" />
-                            </div>
-                            <p className="text-sm text-gray-500">{payment.tutorId?.email} · {payment.tutorId?.phone}</p>
-
-                            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
-                                <div><span className="font-medium">Lead:</span> {payment.leadId?.subject} — {payment.leadId?.level}</div>
-                                <div><span className="font-medium">Board:</span> {payment.leadId?.board}</div>
-                                <div><span className="font-medium">Area:</span> {payment.leadId?.area}</div>
-                                <div><span className="font-medium">Amount:</span> Rs. {payment.amount}</div>
-                                <div><span className="font-medium">Method:</span> {payment.method}</div>
-                                {payment.transactionId && (
-                                    <div><span className="font-medium">Txn ID:</span> <span className="font-mono">{payment.transactionId}</span></div>
-                                )}
-                            </div>
-                            <p className="text-xs text-gray-400 mt-2">Submitted: {new Date(payment.createdAt).toLocaleString()}</p>
-                        </div>
-
-                        <div className="flex sm:flex-col gap-2 sm:min-w-[130px]">
-                            <button
-                                onClick={() => handleVerify(payment._id)}
-                                disabled={acting === payment._id}
-                                className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
-                            >
-                                {acting === payment._id ? '...' : '✓ Verify'}
-                            </button>
-                            <button
-                                onClick={() => handleReject(payment._id)}
-                                disabled={acting === payment._id}
-                                className="flex-1 sm:flex-none bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm disabled:opacity-50"
-                            >
-                                {acting === payment._id ? '...' : '✗ Reject'}
-                            </button>
-                        </div>
+        <>
+            {/* Full-screen image viewer */}
+            {viewingImage && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+                    onClick={() => setViewingImage(null)}
+                >
+                    <div className="relative max-w-2xl w-full">
+                        <button
+                            className="absolute -top-10 right-0 text-white text-3xl hover:text-gray-300"
+                            onClick={() => setViewingImage(null)}
+                        >×</button>
+                        <img
+                            src={viewingImage}
+                            alt="Payment proof"
+                            className="w-full rounded-xl shadow-2xl"
+                            onClick={e => e.stopPropagation()}
+                        />
+                        <p className="text-white text-xs text-center mt-2 opacity-60">Click outside to close</p>
                     </div>
                 </div>
-            ))}
-        </div>
+            )}
+
+            <div className="grid gap-4">
+                {payments.map(payment => (
+                    <div key={payment._id} className="bg-white rounded-xl shadow-sm p-5">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="text-base font-semibold text-gray-800">{payment.tutorId?.name}</h3>
+                                    <Badge status="pending" />
+                                </div>
+                                <p className="text-sm text-gray-500">{payment.tutorId?.email} · {payment.tutorId?.phone}</p>
+
+                                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+                                    <div><span className="font-medium">Lead:</span> {payment.leadId?.subject} — {payment.leadId?.level}</div>
+                                    <div><span className="font-medium">Board:</span> {payment.leadId?.board}</div>
+                                    <div><span className="font-medium">Area:</span> {payment.leadId?.area}</div>
+                                    <div><span className="font-medium">Amount:</span> Rs. {payment.amount}</div>
+                                    <div><span className="font-medium">Method:</span> {payment.method}</div>
+                                    {payment.transactionId && (
+                                        <div><span className="font-medium">Txn ID:</span> <span className="font-mono">{payment.transactionId}</span></div>
+                                    )}
+                                </div>
+
+                                {/* Payment Proof Screenshot */}
+                                {payment.proofUrl ? (
+                                    <div className="mt-3">
+                                        <p className="text-xs font-medium text-gray-500 mb-1">Payment Screenshot:</p>
+                                        <div className="flex items-center gap-3">
+                                            <img
+                                                src={payment.proofUrl}
+                                                alt="Payment proof"
+                                                className="h-20 w-28 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition"
+                                                onClick={() => setViewingImage(payment.proofUrl)}
+                                            />
+                                            <button
+                                                onClick={() => setViewingImage(payment.proofUrl)}
+                                                className="text-sm text-green-600 hover:underline"
+                                            >
+                                                View Full Size
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 text-xs text-yellow-700">
+                                        ⚠️ No screenshot uploaded — verify Txn ID manually
+                                    </div>
+                                )}
+
+                                <p className="text-xs text-gray-400 mt-2">Submitted: {new Date(payment.createdAt).toLocaleString()}</p>
+                            </div>
+
+                            <div className="flex sm:flex-col gap-2 sm:min-w-[130px]">
+                                <button
+                                    onClick={() => handleVerify(payment._id)}
+                                    disabled={acting === payment._id}
+                                    className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
+                                >
+                                    {acting === payment._id ? '...' : '✓ Verify'}
+                                </button>
+                                <button
+                                    onClick={() => handleReject(payment._id)}
+                                    disabled={acting === payment._id}
+                                    className="flex-1 sm:flex-none bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm disabled:opacity-50"
+                                >
+                                    {acting === payment._id ? '...' : '✗ Reject'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
     );
 };
 
