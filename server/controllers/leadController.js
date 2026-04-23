@@ -46,16 +46,28 @@ const deleteLead = async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 };
 
-// Tutor unlocks lead (submit payment)
+// Tutor unlocks lead (submit payment + optional screenshot)
 const unlockLead = async (req, res) => {
     try {
         const lead = await Lead.findById(req.params.id);
         if (!lead) return res.status(404).json({ message: 'Lead not found' });
         const already = lead.unlockedBy.find(u => u.tutorId.toString() === req.user.id);
-        if (already) return res.status(400).json({ message: 'Already unlocked this lead' });
+        if (already) return res.status(400).json({ message: 'Already submitted payment for this lead' });
 
-        const { method, transactionId } = req.body;
-        await Payment.create({ tutorId: req.user.id, leadId: lead._id, amount: 150, method: method || 'manual', transactionId: transactionId || '', status: 'pending' });
+        const { method, transactionId, proofImage } = req.body;
+
+        // proofImage is a base64 data URL sent from the client (e.g. "data:image/jpeg;base64,...")
+        // We store it directly — can be swapped for Cloudinary URL later
+        await Payment.create({
+            tutorId: req.user.id,
+            leadId: lead._id,
+            amount: 150,
+            method: method || 'manual',
+            transactionId: transactionId || '',
+            proofUrl: proofImage || '',
+            status: 'pending'
+        });
+
         lead.unlockedBy.push({ tutorId: req.user.id, paidAt: new Date() });
         lead.status = 'pending';
         await lead.save();

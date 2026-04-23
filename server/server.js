@@ -1,13 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config(); // Vercel injects env vars directly
+
+// ── Catch unhandled promise rejections so server doesn't crash silently ────────
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
+});
 
 const app = express();
 
 // ── CORS — allow frontend on any localhost port ──────────────────────────────
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
 }));
 
