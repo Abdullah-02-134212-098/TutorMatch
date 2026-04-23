@@ -2,7 +2,12 @@
 
 > Pakistan's trusted home tutor marketplace connecting students with verified tutors across Karachi
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](NOT-LIVE-YET)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://tutormatch-client.vercel.app)
+[![Frontend](https://img.shields.io/badge/frontend-Vercel-black)](https://tutormatch-client.vercel.app)
+[![Backend](https://img.shields.io/badge/backend-Vercel-black)](https://tutormatch-server.vercel.app/ping)
+[![MongoDB](https://img.shields.io/badge/database-MongoDB%20Atlas-green)](https://mongodb.com)
+
+---
 
 ## 📖 Overview
 
@@ -10,11 +15,11 @@ TutorMatch PK is a full-stack web platform that connects students and parents wi
 
 ### Why TutorMatch PK?
 
-- **🔐 Trust First**: All tutors are CNIC-verified before going live
-- **💰 Pay-Per-Lead**: Tutors pay only Rs. 100-300 per student contact (no subscription needed)
-- **📚 Pakistan-Focused**: Supports Sindh, Federal, Punjab, O/A Levels, Aga Khan, IB, and University boards
-- **📍 Karachi-First**: Covers 40+ areas across Karachi with plans to expand
-- **🇵🇰 Pakistani Payments**: Manual JazzCash/Easypaisa verification (API integration planned)
+- **🔐 Trust First** — All tutors are CNIC-verified before going live
+- **💰 Pay-Per-Lead** — Tutors pay only Rs. 100–300 per student contact (no subscription needed)
+- **📚 Pakistan-Focused** — Supports Sindh, Federal, Punjab, O/A Levels, Aga Khan, IB, and University boards
+- **📍 Karachi-First** — Covers 40+ areas across Karachi with plans to expand
+- **🇵🇰 Pakistani Payments** — Manual JazzCash/Easypaisa verification (API integration planned)
 
 ---
 
@@ -28,7 +33,7 @@ TutorMatch PK is a full-stack web platform that connects students and parents wi
 
 ### For Tutors
 - 📊 Dashboard to browse open student leads
-- 🔓 Unlock leads by paying Rs. 100-300 (via JazzCash/Easypaisa screenshot)
+- 🔓 Unlock leads by paying Rs. 100–300 (via JazzCash/Easypaisa screenshot)
 - ⭐ Build profile with subjects, boards, levels, areas, and bio
 - 📈 Track lead history and payment status
 - 🎯 Get matched with relevant students based on profile
@@ -44,26 +49,24 @@ TutorMatch PK is a full-stack web platform that connects students and parents wi
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React.js** - Component-based UI
-- **Vite** - Fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **React Router** - Client-side routing
-- **Axios** - HTTP client
+- **React.js** — Component-based UI
+- **Vite** — Fast build tool
+- **Tailwind CSS** — Utility-first styling
+- **React Router DOM** — Client-side routing
+- **Axios** — HTTP client
 
 ### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **MongoDB Atlas** - Cloud database
-- **Mongoose** - ODM for MongoDB
-- **JWT** - Authentication
-- **bcrypt** - Password hashing
+- **Node.js** — Runtime environment
+- **Express.js v5** — Web framework
+- **MongoDB Atlas** — Cloud database
+- **Mongoose** — ODM for MongoDB
+- **JWT** — Authentication tokens
+- **bcryptjs** — Password hashing
+- **Nodemailer** — Email notifications
 
-### Tools & Services
-- **Postman** - API testing
-- **Git & GitHub** - Version control
-- **Vercel** - Frontend hosting (planned)
-- **Render** - Backend hosting (planned)
-- **Cloudinary** - Image hosting (planned)
+### Deployment
+- **Vercel** — Frontend + Backend (serverless)
+- **MongoDB Atlas** — Cloud database
 
 ---
 
@@ -71,10 +74,15 @@ TutorMatch PK is a full-stack web platform that connects students and parents wi
 
 ```
 TutorMatch/
-├── client/                 # React frontend
+├── client/                    # React frontend
+│   ├── public/
 │   ├── src/
-│   │   ├── components/     # Reusable components (Navbar, etc.)
-│   │   ├── pages/          # Page components
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   └── ProtectedRoute.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
 │   │   │   ├── Home.jsx
 │   │   │   ├── Search.jsx
 │   │   │   ├── Login.jsx
@@ -82,80 +90,145 @@ TutorMatch/
 │   │   │   ├── StudentDashboard.jsx
 │   │   │   ├── TutorDashboard.jsx
 │   │   │   ├── TutorProfileSetup.jsx
+│   │   │   ├── TutorPublicProfile.jsx
 │   │   │   └── AdminPanel.jsx
-│   │   ├── context/        # React Context (Auth)
-│   │   ├── services/       # API service (axios)
-│   │   ├── utils/          # Helper functions, constants
-│   │   └── App.jsx
+│   │   ├── services/
+│   │   │   └── api.js          # Axios instance with VITE_API_URL
+│   │   ├── utils/
+│   │   │   ├── boards.js
+│   │   │   └── constants.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── vercel.json             # SPA rewrite rule for React Router
+│   ├── vite.config.js
 │   └── package.json
-├── server/                 # Node.js backend
-│   ├── config/             # Database connection
-│   ├── models/             # Mongoose schemas
+├── server/                    # Node.js backend
+│   ├── config/
+│   │   └── db.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── tutorController.js
+│   │   ├── leadController.js
+│   │   ├── adminController.js
+│   │   ├── paymentController.js
+│   │   └── reviewController.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── adminOnly.js
+│   ├── models/
 │   │   ├── User.js
 │   │   ├── Tutor.js
 │   │   ├── Lead.js
 │   │   ├── Payment.js
 │   │   └── Review.js
-│   ├── controllers/        # Business logic
-│   ├── routes/             # API routes
-│   ├── middleware/         # Auth, admin checks
-│   └── server.js
-├── .env                    # Environment variables
-└── README.md
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── tutors.js
+│   │   ├── leads.js
+│   │   ├── payments.js
+│   │   ├── reviews.js
+│   │   └── admin.js
+│   ├── server.js
+│   ├── vercel.json             # Routes all requests to server.js
+│   └── package.json
+└── .env                       # Local environment variables (never commit)
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Development)
 
 ### Prerequisites
-- Node.js v16+ and npm
-- MongoDB Atlas account (free tier)
-- Git
+- Node.js v18+
+- npm
+- MongoDB Atlas account (free tier works)
 
-### Installation
+### 1. Clone the repository
 
-1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/tutormatch-pk.git
-cd tutormatch-pk
+git clone https://github.com/yourusername/TutorMatch.git
+cd TutorMatch
 ```
 
-2. **Setup Backend**
-```bash
-cd server
-npm install
-```
+### 2. Create `.env` file in the root
 
-Create `.env` file in root:
 ```env
-MONGO_URI=your_mongodb_connection_string
+MONGO_URI=your_mongodb_atlas_connection_string
 PORT=5000
 JWT_SECRET=your_secret_key_here
+EMAIL_USER=yourgmail@gmail.com
+EMAIL_PASS=your_gmail_app_password
+CLIENT_URL=http://localhost:5173
 ```
 
-3. **Setup Frontend**
-```bash
-cd client
-npm install
-```
+### 3. Install & run the backend
 
-4. **Run the application**
-
-Terminal 1 (Backend):
 ```bash
 cd server
+npm install
 node server.js
 ```
 
-Terminal 2 (Frontend):
+Backend runs at: `http://localhost:5000`
+
+### 4. Install & run the frontend
+
 ```bash
 cd client
+npm install
 npm run dev
 ```
 
-Frontend: `http://localhost:5173`  
-Backend: `http://localhost:5000`
+Frontend runs at: `http://localhost:5173`
+
+> The Vite dev server proxies `/api` requests to `http://localhost:5000` automatically.
+
+---
+
+## ☁️ Deployment (Vercel)
+
+Both frontend and backend are deployed separately on Vercel.
+
+### Backend Deployment
+
+```bash
+cd server
+npx vercel --prod
+```
+
+Set these environment variables in **Vercel Dashboard → tutormatch-server → Settings → Environment Variables**:
+
+| Key | Value |
+|-----|-------|
+| `MONGO_URI` | Your MongoDB Atlas connection string |
+| `JWT_SECRET` | Your JWT secret key |
+| `EMAIL_USER` | Gmail address |
+| `EMAIL_PASS` | Gmail app password |
+| `CLIENT_URL` | `https://tutormatch-client.vercel.app` |
+
+### Frontend Deployment
+
+```bash
+cd client
+npx vercel --prod
+```
+
+Set this environment variable in **Vercel Dashboard → tutormatch-client → Settings → Environment Variables**:
+
+| Key | Value |
+|-----|-------|
+| `VITE_API_URL` | `https://tutormatch-server.vercel.app/api` |
+
+### MongoDB Atlas — Allow All IPs
+
+In MongoDB Atlas → **Network Access** → **Add IP Address** → select **Allow Access from Anywhere** (`0.0.0.0/0`). Required because Vercel uses dynamic IPs.
+
+### Verify Deployment
+
+```
+https://tutormatch-server.vercel.app/ping
+```
+Should return: `{ "pong": true, "time": "..." }`
 
 ---
 
@@ -163,200 +236,143 @@ Backend: `http://localhost:5000`
 
 ### Authentication
 ```
-POST   /api/auth/register    - Register new user
-POST   /api/auth/login       - Login user
-GET    /api/auth/me          - Get current user (protected)
+POST   /api/auth/register         Register new user
+POST   /api/auth/login            Login user
+GET    /api/auth/me               Get current user (protected)
 ```
 
 ### Tutors
 ```
-GET    /api/tutors           - Get all verified tutors (public)
-GET    /api/tutors/:id       - Get single tutor (public)
-GET    /api/tutors/me        - Get own profile (protected)
-POST   /api/tutors           - Create profile (protected)
-PUT    /api/tutors/me        - Update profile (protected)
+GET    /api/tutors                Get all verified tutors (public)
+GET    /api/tutors/:id            Get single tutor (public)
+GET    /api/tutors/me             Get own profile (protected)
+POST   /api/tutors                Create tutor profile (protected)
+PUT    /api/tutors/me             Update tutor profile (protected)
 ```
 
 ### Leads
 ```
-POST   /api/leads            - Create lead (public)
-GET    /api/leads            - Get all leads (tutor protected)
-GET    /api/leads/:id        - Get single lead (tutor protected)
-POST   /api/leads/:id/unlock - Unlock lead (tutor protected)
+POST   /api/leads                 Create lead (public)
+GET    /api/leads                 Get all leads (tutor protected)
+GET    /api/leads/:id             Get single lead (tutor protected)
+POST   /api/leads/:id/unlock      Unlock lead (tutor protected)
 ```
 
 ### Admin (Admin only)
 ```
-GET    /api/admin/stats              - Get dashboard stats
-POST   /api/admin/approve-tutor/:id  - Approve tutor
-POST   /api/admin/reject-tutor/:id   - Reject tutor
-POST   /api/admin/verify-payment/:id - Verify payment & unlock lead
-POST   /api/admin/reject-payment/:id - Reject payment
+GET    /api/admin/stats                  Dashboard stats
+POST   /api/admin/approve-tutor/:id      Approve tutor
+POST   /api/admin/reject-tutor/:id       Reject tutor
+POST   /api/admin/verify-payment/:id     Verify payment & unlock lead
+POST   /api/admin/reject-payment/:id     Reject payment
 ```
 
----
-
-## 🎨 Screenshots
-
-### Home Page
-*Smart search with autocomplete, featured tutors section, how it works*
-
-### Search Results
-*Tutor cards showing subjects, boards, areas, fees, ratings, CNIC verified badge*
-
-### Tutor Dashboard
-*Browse leads, unlock with payment, view profile status*
-
-### Admin Panel
-*Stats dashboard, pending tutors, pending payments*
-
----
-
-## 🇵🇰 Pakistan-Specific Features
-
-### Education Boards Supported
-- Sindh Board (Matric, Intermediate)
-- Federal Board (SSC, HSSC)
-- Punjab Board
-- Cambridge (O Level, A Level)
-- Aga Khan Board
-- IB (MYP, DP)
-- University (BS, BBA, MBA, Engineering)
-
-### Karachi Areas Covered
-40+ areas including DHA Phase 1-8, Clifton, Gulshan, North Nazimabad, PECHS, Malir, Korangi, and more.
-
-### Payment Methods
-- JazzCash (manual screenshot verification)
-- Easypaisa (manual screenshot verification)
-- API integration planned for Month 2-3
+### Reviews
+```
+POST   /api/reviews               Submit review
+GET    /api/reviews/:tutorId      Get tutor reviews
+```
 
 ---
 
 ## 📊 Database Schema
 
 ### User
-```javascript
-{
-  name, email, passwordHash, phone,
-  role: ['student', 'tutor', 'admin'],
-  city, isVerified, createdAt
-}
+```js
+{ name, email, passwordHash, phone, role: ['student','tutor','admin'], city, isVerified, createdAt }
 ```
 
 ### Tutor
-```javascript
-{
-  userId, subjects[], boards[], levels[], areas[],
-  feeRange: { min, max },
-  bio, photo, cnic,
-  isVerified, plan, rating, totalReviews,
-  featured, featuredUntil
-}
+```js
+{ userId, subjects[], boards[], levels[], areas[], feeRange: { min, max }, bio, photo, cnic,
+  isVerified, plan, rating, totalReviews, featured, featuredUntil }
 ```
 
 ### Lead
-```javascript
-{
-  studentId, studentName, studentPhone (encrypted),
-  subject, board, level, area, description,
-  status: ['open', 'pending', 'unlocked', 'closed', 'expired'],
-  unlockedBy: [{ tutorId, paidAt }],
-  createdAt, expiresAt (30 days)
-}
+```js
+{ studentId, studentName, studentPhone, subject, board, level, area, description,
+  status: ['open','pending','unlocked','closed','expired'],
+  unlockedBy: [{ tutorId, paidAt }], createdAt, expiresAt }
+```
+
+### Payment
+```js
+{ tutorId, leadId, amount, method: ['jazzcash','easypaisa'], screenshotUrl, status: ['pending','verified','rejected'] }
 ```
 
 ---
 
-## 🔒 Security Features
+## 🔒 Security
 
-- ✅ JWT-based authentication
-- ✅ Password hashing with bcrypt
-- ✅ Role-based access control (Student, Tutor, Admin)
-- ✅ Protected routes middleware
-- ✅ CNIC verification for tutors
-- ✅ Student phone number encryption (planned)
-- ✅ Rate limiting (planned)
+- JWT-based stateless authentication
+- Password hashing with bcryptjs
+- Role-based access control (Student / Tutor / Admin)
+- Protected route middleware on all sensitive endpoints
+- CNIC verification required before tutor goes live
+- CORS restricted to frontend origin via `CLIENT_URL` env var
 
 ---
 
-## 🚧 Roadmap
+## 🇵🇰 Pakistan-Specific
 
-### Phase 1 - MVP (Weeks 1-6) ✅
-- [x] Core authentication
-- [x] Tutor profiles with board/subject/area filters
-- [x] Lead creation and unlocking
-- [x] Manual payment verification
-- [x] Admin panel
+### Education Boards Supported
+Sindh Board, Federal Board, Punjab Board, Cambridge O/A Level, Aga Khan Board, IB (MYP/DP), University (BS/BBA/MBA/Engineering)
 
-### Phase 2 - Growth (Month 2-3)
-- [ ] JazzCash/Easypaisa API integration
-- [ ] WhatsApp notifications
-- [ ] In-app messaging (student ↔ tutor)
-- [ ] Review system
-- [ ] Map view for tutor coverage
-- [ ] Urdu language toggle
+### Karachi Areas Covered
+40+ areas including DHA Phase 1–8, Clifton, Gulshan, North Nazimabad, PECHS, Malir, Korangi, Saddar, Gulistan-e-Johar, and more.
 
-### Phase 3 - Scale (Month 4-6)
-- [ ] Expand to Lahore and Islamabad
-- [ ] Mobile app (React Native)
-- [ ] AI-powered tutor matching
-- [ ] Background check integration
-- [ ] Tutor subscription plans
-- [ ] SEO optimization
+### Payment Methods
+- JazzCash (manual screenshot verification)
+- Easypaisa (manual screenshot verification)
+- API integration planned
 
 ---
 
 ## 💰 Monetization
 
-| Feature | Free | Pro (Rs. 1,500/mo) |
-|---------|------|-------------------|
-| Profile visible | ✅ | ✅ |
-| Leads/month | 3 | Unlimited |
-| Search ranking | Normal | Higher |
-| Verified badge | ❌ | ✅ |
-| WhatsApp alerts | ❌ | ✅ |
-
 **Pay-Per-Lead Pricing:**
-- Matric/Primary: Rs. 100
-- Intermediate/ICS/ICOM: Rs. 150
-- O/A Level: Rs. 250-300
-- University: Rs. 200
+
+| Level | Price |
+|-------|-------|
+| Matric / Primary | Rs. 100 |
+| Intermediate / ICS / ICOM | Rs. 150 |
+| O Level / A Level | Rs. 250–300 |
+| University | Rs. 200 |
 
 ---
 
-## 🤝 Contributing
+## 🚧 Roadmap
 
-Contributions are welcome! Please follow these steps:
+### Phase 1 — MVP ✅
+- [x] Auth (register/login/JWT)
+- [x] Tutor profiles with filters
+- [x] Lead creation & unlocking
+- [x] Manual payment verification
+- [x] Admin panel
+- [x] Deployed on Vercel
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Phase 2 — Growth
+- [ ] JazzCash/Easypaisa API integration
+- [ ] WhatsApp notifications (Twilio)
+- [ ] In-app messaging
+- [ ] Review system
+- [ ] Map view for tutor coverage
+- [ ] Urdu language toggle
+
+### Phase 3 — Scale
+- [ ] Expand to Lahore & Islamabad
+- [ ] Mobile app (React Native)
+- [ ] AI-powered tutor matching
+- [ ] Tutor subscription plans
+- [ ] SEO optimization
 
 ---
 
 ## 👨‍💻 Author
 
-**Abdullah**  
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Email: your.email@example.com
-
----
-
-## 🙏 Acknowledgments
-
-- Built with guidance from the Claude AI assistant
-- Inspired by the need for trusted home tutors in Pakistan
-- Thanks to the Pakistani EdTech community
-
----
-
-## 📞 Support
-
-For support, email tutormatchpk@gmail.com or open an issue on GitHub.
+**Muhammad Abdullah**
+- GitHub: [@yourusername](https://github.com/Abdullah-02-134212-098)
+- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/muhammad-abdullah-webdev/)
 
 ---
 
