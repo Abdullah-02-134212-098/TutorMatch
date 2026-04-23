@@ -2,10 +2,7 @@
 
 > Pakistan's trusted home tutor marketplace connecting students with verified tutors across Karachi
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://tutormatch-client.vercel.app)
-[![Frontend](https://img.shields.io/badge/frontend-Vercel-black)](https://tutormatch-client.vercel.app)
-[![Backend](https://img.shields.io/badge/backend-Vercel-black)](https://tutormatch-server.vercel.app/ping)
-[![MongoDB](https://img.shields.io/badge/database-MongoDB%20Atlas-green)](https://mongodb.com)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://tutor-match-pk.vercel.app/)
 
 ---
 
