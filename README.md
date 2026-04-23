@@ -336,7 +336,7 @@ Sindh Board, Federal Board, Punjab Board, Cambridge O/A Level, Aga Khan Board, I
 |-------|-------|
 | Matric / Primary | Rs. 100 |
 | Intermediate / ICS / ICOM | Rs. 150 |
-| O Level / A Level | Rs. 250–300 |
+| O Level / A Level | Rs. 300 |
 | University | Rs. 200 |
 
 ---
@@ -365,14 +365,6 @@ Sindh Board, Federal Board, Punjab Board, Cambridge O/A Level, Aga Khan Board, I
 - [ ] AI-powered tutor matching
 - [ ] Tutor subscription plans
 - [ ] SEO optimization
-
----
-
-## 👨‍💻 Author
-
-**Muhammad Abdullah**
-- GitHub: [@yourusername](https://github.com/Abdullah-02-134212-098)
-- LinkedIn: [Your LinkedIn](https://www.linkedin.com/in/muhammad-abdullah-webdev/)
 
 ---
 
