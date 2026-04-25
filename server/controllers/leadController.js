@@ -1,5 +1,6 @@
 const Lead = require('../models/Lead');
 const Payment = require('../models/Payment');
+const cloudinary = require('../config/cloudinary');
 
 const createLead = async (req, res) => {
     try {
@@ -46,33 +47,59 @@ const deleteLead = async (req, res) => {
     } catch (error) { res.status(500).json({ message: error.message }); }
 };
 
-// Tutor unlocks lead (submit payment + optional screenshot)
+// Upload base64 image to Cloudinary and return secure URL
+const uploadProofToCloudinary = async (base64DataUrl) => {
+    const result = await cloudinary.uploader.upload(base64DataUrl, {
+        folder: 'tutormatch/payment-proofs',
+        resource_type: 'image',
+        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+    });
+    return result.secure_url;
+};
+
+// Tutor unlocks lead — uploads screenshot to Cloudinary
 const unlockLead = async (req, res) => {
     try {
         const lead = await Lead.findById(req.params.id);
         if (!lead) return res.status(404).json({ message: 'Lead not found' });
+
         const already = lead.unlockedBy.find(u => u.tutorId.toString() === req.user.id);
         if (already) return res.status(400).json({ message: 'Already submitted payment for this lead' });
 
         const { method, transactionId, proofImage } = req.body;
 
-        // proofImage is a base64 data URL sent from the client (e.g. "data:image/jpeg;base64,...")
-        // We store it directly — can be swapped for Cloudinary URL later
+        if (!proofImage) {
+            return res.status(400).json({ message: 'Payment screenshot is required' });
+        }
+
+        // Upload screenshot to Cloudinary
+        let proofUrl = '';
+        try {
+            proofUrl = await uploadProofToCloudinary(proofImage);
+        } catch (uploadErr) {
+            console.error('Cloudinary upload failed:', uploadErr.message);
+            return res.status(500).json({ message: 'Failed to upload payment screenshot. Please check Cloudinary config.' });
+        }
+
         await Payment.create({
             tutorId: req.user.id,
             leadId: lead._id,
             amount: 150,
             method: method || 'manual',
             transactionId: transactionId || '',
-            proofUrl: proofImage || '',
+            proofUrl,
             status: 'pending'
         });
 
         lead.unlockedBy.push({ tutorId: req.user.id, paidAt: new Date() });
         lead.status = 'pending';
         await lead.save();
+
         res.json({ message: 'Payment submitted, waiting for admin verification' });
-    } catch (error) { res.status(500).json({ message: error.message }); }
+    } catch (error) {
+        console.error('unlockLead error:', error.message);
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // Tutor's unlocked leads with conditional contact reveal
@@ -87,7 +114,9 @@ const getMyUnlockedLeads = async (req, res) => {
             const paymentStatus = payment?.status || 'pending';
             return {
                 _id: lead._id, subject: lead.subject, board: lead.board, level: lead.level,
-                area: lead.area, description: lead.description, createdAt: lead.createdAt, paymentStatus,
+                area: lead.area, description: lead.description, createdAt: lead.createdAt,
+                paymentStatus,
+                rejectionReason: payment?.rejectionReason || '',
                 studentName: paymentStatus === 'verified' ? lead.studentName : null,
                 studentPhone: paymentStatus === 'verified' ? lead.studentPhone : null,
                 address: paymentStatus === 'verified' ? lead.address : null,

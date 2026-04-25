@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 
-const TABS = ['Dashboard', 'All Tutors', 'Pending Approvals', 'Pending Payments'];
+const TABS = ['Dashboard', 'All Tutors', 'Pending Approvals', 'Pending Payments', 'Payment History', 'Students & Leads'];
 
 const StatCard = ({ label, value, color }) => (
     <div className="bg-white rounded-xl shadow-sm p-5">
@@ -379,6 +379,7 @@ const PendingPaymentsTab = () => {
     const [loading, setLoading] = useState(true);
     const [acting, setActing] = useState(null);
     const [viewingImage, setViewingImage] = useState(null); // full-screen image viewer
+    const [rejectTarget, setRejectTarget] = useState(null); // payment id awaiting reason
 
     const fetchPayments = () => {
         setLoading(true);
@@ -401,16 +402,17 @@ const PendingPaymentsTab = () => {
         setActing(null);
     };
 
-    const handleReject = async (id) => {
-        if (!confirm('Reject this payment?')) return;
-        setActing(id);
+    const handleReject = async (reason) => {
+        if (!rejectTarget) return;
+        setActing(rejectTarget);
         try {
-            await api.post(`/admin/reject-payment/${id}`);
-            setPayments(prev => prev.filter(p => p._id !== id));
+            await api.post(`/admin/reject-payment/${rejectTarget}`, { reason });
+            setPayments(prev => prev.filter(p => p._id !== rejectTarget));
         } catch (err) {
             alert(err.response?.data?.message || 'Error rejecting payment');
         }
         setActing(null);
+        setRejectTarget(null);
     };
 
     if (loading) return <p className="text-gray-500 py-8">Loading...</p>;
@@ -424,6 +426,15 @@ const PendingPaymentsTab = () => {
 
     return (
         <>
+            {/* Payment Rejection Reason Modal */}
+            {rejectTarget && (
+                <RejectModal
+                    tutorName="this payment"
+                    onConfirm={handleReject}
+                    onClose={() => setRejectTarget(null)}
+                />
+            )}
+
             {/* Full-screen image viewer */}
             {viewingImage && (
                 <div
@@ -505,7 +516,7 @@ const PendingPaymentsTab = () => {
                                     {acting === payment._id ? '...' : '✓ Verify'}
                                 </button>
                                 <button
-                                    onClick={() => handleReject(payment._id)}
+                                    onClick={() => setRejectTarget(payment._id)}
                                     disabled={acting === payment._id}
                                     className="flex-1 sm:flex-none bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm disabled:opacity-50"
                                 >
@@ -517,6 +528,261 @@ const PendingPaymentsTab = () => {
                 ))}
             </div>
         </>
+    );
+};
+
+// ─── Payment History Tab ──────────────────────────────────────────────────────
+const PaymentHistoryTab = () => {
+    const [payments, setPayments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState('all'); // all | verified | rejected | pending
+    const [viewingImage, setViewingImage] = useState(null);
+
+    useEffect(() => {
+        api.get('/admin/all-payments')
+            .then(r => setPayments(r.data))
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, []);
+
+    const filtered = filter === 'all' ? payments : payments.filter(p => p.status === filter);
+
+    const statusStyle = {
+        verified: 'bg-green-100 text-green-700',
+        rejected: 'bg-red-100 text-red-700',
+        pending: 'bg-yellow-100 text-yellow-700',
+    };
+
+    const totalRevenue = payments
+        .filter(p => p.status === 'verified')
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    if (loading) return <p className="text-gray-500 py-8">Loading...</p>;
+
+    return (
+        <>
+            {/* Full-screen image viewer */}
+            {viewingImage && (
+                <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" onClick={() => setViewingImage(null)}>
+                    <div className="relative max-w-2xl w-full">
+                        <button className="absolute -top-10 right-0 text-white text-3xl hover:text-gray-300" onClick={() => setViewingImage(null)}>×</button>
+                        <img src={viewingImage} alt="Payment proof" className="w-full rounded-xl shadow-2xl" onClick={e => e.stopPropagation()} />
+                        <p className="text-white text-xs text-center mt-2 opacity-60">Click outside to close</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Summary bar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <div className="flex gap-2">
+                    {['all', 'verified', 'pending', 'rejected'].map(s => (
+                        <button
+                            key={s}
+                            onClick={() => setFilter(s)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition ${filter === s ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-green-400'}`}
+                        >
+                            {s === 'all' ? `All (${payments.length})` : `${s} (${payments.filter(p => p.status === s).length})`}
+                        </button>
+                    ))}
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm font-semibold text-green-700">
+                    💰 Total Revenue: Rs. {totalRevenue.toLocaleString()}
+                </div>
+            </div>
+
+            {filtered.length === 0 ? (
+                <div className="text-center py-16">
+                    <div className="text-5xl mb-3">📭</div>
+                    <p className="text-gray-400">No {filter === 'all' ? '' : filter} payments yet.</p>
+                </div>
+            ) : (
+                <div className="grid gap-3">
+                    {filtered.map(payment => (
+                        <div key={payment._id} className={`bg-white rounded-xl shadow-sm p-5 border-l-4 ${payment.status === 'verified' ? 'border-green-400' : payment.status === 'rejected' ? 'border-red-400' : 'border-yellow-400'}`}>
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                        <p className="font-semibold text-gray-800">{payment.tutorId?.name}</p>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusStyle[payment.status]}`}>
+                                            {payment.status === 'verified' ? '✓ Verified' : payment.status === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mb-2">{payment.tutorId?.email} · {payment.tutorId?.phone}</p>
+
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+                                        <div><span className="font-medium">Lead:</span> {payment.leadId?.subject} — {payment.leadId?.level}</div>
+                                        <div><span className="font-medium">Board:</span> {payment.leadId?.board}</div>
+                                        <div><span className="font-medium">Area:</span> {payment.leadId?.area}</div>
+                                        <div><span className="font-medium">Amount:</span> <span className="text-green-700 font-semibold">Rs. {payment.amount}</span></div>
+                                        <div><span className="font-medium">Method:</span> {payment.method}</div>
+                                        {payment.transactionId && (
+                                            <div><span className="font-medium">Txn ID:</span> <span className="font-mono text-xs">{payment.transactionId}</span></div>
+                                        )}
+                                    </div>
+
+                                    {/* Student info */}
+                                    {payment.leadId?.studentName && (
+                                        <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded px-2 py-1 inline-flex gap-3">
+                                            <span>👤 {payment.leadId.studentName}</span>
+                                            <span>📞 {payment.leadId.studentPhone}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Rejection reason */}
+                                    {payment.status === 'rejected' && payment.rejectionReason && (
+                                        <p className="mt-2 text-xs text-red-500 italic">Reason: {payment.rejectionReason}</p>
+                                    )}
+
+                                    {/* Verified by */}
+                                    {payment.status === 'verified' && payment.verifiedBy && (
+                                        <p className="mt-1 text-xs text-green-600">Verified by: {payment.verifiedBy.name}</p>
+                                    )}
+
+                                    <p className="text-xs text-gray-400 mt-2">Submitted: {new Date(payment.createdAt).toLocaleString()}</p>
+                                </div>
+
+                                {/* Screenshot thumbnail */}
+                                {payment.proofUrl && (
+                                    <div className="shrink-0">
+                                        <p className="text-xs text-gray-400 mb-1">Screenshot:</p>
+                                        <img
+                                            src={payment.proofUrl}
+                                            alt="Proof"
+                                            className="h-20 w-28 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition"
+                                            onClick={() => setViewingImage(payment.proofUrl)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </>
+    );
+};
+
+// ─── Students & Leads Tab ─────────────────────────────────────────────────────
+const StudentsTab = () => {
+    const [leads, setLeads] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [expandedId, setExpandedId] = useState(null);
+
+    useEffect(() => {
+        api.get('/admin/all-leads')
+            .then(r => setLeads(r.data))
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, []);
+
+    const filtered = leads.filter(l => {
+        const q = search.toLowerCase();
+        return !q || l.studentName?.toLowerCase().includes(q)
+            || l.subject?.toLowerCase().includes(q)
+            || l.area?.toLowerCase().includes(q)
+            || l.studentPhone?.includes(q);
+    });
+
+    const statusColors = {
+        open: 'bg-blue-100 text-blue-700',
+        pending: 'bg-yellow-100 text-yellow-700',
+        unlocked: 'bg-green-100 text-green-700',
+        closed: 'bg-gray-100 text-gray-500',
+        expired: 'bg-red-100 text-red-400',
+    };
+    const paymentColors = {
+        pending: 'text-yellow-600',
+        verified: 'text-green-600',
+        rejected: 'text-red-500',
+    };
+
+    if (loading) return <p className="text-gray-500 py-8">Loading...</p>;
+
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-500">{leads.length} total lead{leads.length !== 1 ? 's' : ''}</p>
+                <input
+                    type="text"
+                    placeholder="Search by name, subject, area, phone..."
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 w-64"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
+            </div>
+
+            {filtered.length === 0 ? (
+                <div className="text-center py-16">
+                    <div className="text-5xl mb-3">📋</div>
+                    <p className="text-gray-400">{search ? 'No leads match your search.' : 'No leads yet.'}</p>
+                </div>
+            ) : (
+                <div className="grid gap-3">
+                    {filtered.map(lead => (
+                        <div key={lead._id} className="bg-white rounded-xl shadow-sm p-5">
+                            {/* Lead header */}
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                        <p className="font-semibold text-gray-800">{lead.subject} — {lead.level}</p>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[lead.status] || 'bg-gray-100 text-gray-600'}`}>
+                                            {lead.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-500">{lead.board} · {lead.area}</p>
+
+                                    {/* Student contact — always visible to admin */}
+                                    <div className="mt-2 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700 inline-flex flex-col gap-0.5">
+                                        <span>👤 <strong>Student:</strong> {lead.studentName}</span>
+                                        <span>📞 <strong>Phone:</strong> {lead.studentPhone}</span>
+                                    </div>
+
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Submitted: {new Date(lead.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+
+                                {/* Tutor count badge */}
+                                <div className="shrink-0 text-right">
+                                    <button
+                                        onClick={() => setExpandedId(expandedId === lead._id ? null : lead._id)}
+                                        className="text-sm text-green-600 hover:underline font-medium"
+                                    >
+                                        {lead.payments.length > 0
+                                            ? `${lead.payments.length} tutor${lead.payments.length > 1 ? 's' : ''} interested ▾`
+                                            : 'No tutors yet'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Expanded — assigned tutors list */}
+                            {expandedId === lead._id && lead.payments.length > 0 && (
+                                <div className="mt-4 border-t border-gray-100 pt-4">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tutors Who Paid for This Lead</p>
+                                    <div className="grid gap-2">
+                                        {lead.payments.map((p, i) => (
+                                            <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                                                <div>
+                                                    <p className="font-medium text-gray-800">{p.tutorName}</p>
+                                                    <p className="text-gray-500 text-xs">{p.tutorEmail} · {p.tutorPhone}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className={`text-xs font-semibold ${paymentColors[p.status] || 'text-gray-500'}`}>
+                                                        {p.status === 'verified' ? '✓ Verified' : p.status === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400">{p.method} · Rs. {p.amount}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 };
 
@@ -551,6 +817,8 @@ const AdminPanel = () => {
                 {activeTab === 'All Tutors' && <AllTutorsTab />}
                 {activeTab === 'Pending Approvals' && <PendingApprovalsTab />}
                 {activeTab === 'Pending Payments' && <PendingPaymentsTab />}
+                {activeTab === 'Payment History' && <PaymentHistoryTab />}
+                {activeTab === 'Students & Leads' && <StudentsTab />}
             </div>
         </div>
     );

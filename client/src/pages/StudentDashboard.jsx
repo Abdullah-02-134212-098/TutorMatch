@@ -82,7 +82,7 @@ const StatusBadge = ({ status }) => {
     };
     const labels = {
         open: 'Open — Awaiting Tutors',
-        pending: 'Payment Pending',
+        pending: 'Tutor Interested — Verifying Payment',
         unlocked: 'Tutor Found ✓',
         closed: 'Closed',
         expired: 'Expired',

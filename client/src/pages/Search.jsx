@@ -245,8 +245,8 @@ const Search = () => {
                                 key={s}
                                 onClick={() => applyQuickSubject(s)}
                                 className={`text-xs px-3 py-1 rounded-full border transition ${filters.subject === s
-                                        ? 'bg-green-600 text-white border-green-600'
-                                        : 'border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-600'
+                                    ? 'bg-green-600 text-white border-green-600'
+                                    : 'border-gray-300 text-gray-500 hover:border-green-400 hover:text-green-600'
                                     }`}
                             >
                                 {s}

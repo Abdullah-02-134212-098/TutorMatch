@@ -28,6 +28,12 @@ const RequestModal = ({ tutor, onClose }) => {
             setError('Please fill in all required fields.');
             return;
         }
+        // Pakistani phone validation: 03XXXXXXXXX (11 digits) or +923XXXXXXXXX
+        const phoneRegex = /^(\+92|0)3[0-9]{9}$/;
+        if (!phoneRegex.test(form.studentPhone.replace(/[-\s]/g, ''))) {
+            setError('Please enter a valid Pakistani phone number (e.g. 03001234567).');
+            return;
+        }
         setLoading(true);
         setError('');
         try {
@@ -188,6 +194,7 @@ const Badge = ({ children, color = 'gray' }) => {
 const TutorPublicProfile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [tutor, setTutor] = useState(null);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
@@ -312,12 +319,14 @@ const TutorPublicProfile = () => {
                                 <span className="text-green-700 font-semibold text-sm">
                                     Rs. {tutor.feeRange?.min?.toLocaleString()} – {tutor.feeRange?.max?.toLocaleString()}/month
                                 </span>
-                                <button
-                                    onClick={() => setShowRequest(true)}
-                                    className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 text-sm font-medium transition"
-                                >
-                                    Request This Tutor
-                                </button>
+                                {user?.role !== 'admin' && (
+                                    <button
+                                        onClick={() => setShowRequest(true)}
+                                        className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 text-sm font-medium transition"
+                                    >
+                                        Request This Tutor
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -364,17 +373,19 @@ const TutorPublicProfile = () => {
                         </div>
                     )}
 
-                    {/* ── CTA Banner ── */}
-                    <div className="bg-green-600 rounded-xl p-6 text-white text-center">
-                        <p className="font-semibold text-lg mb-1">Interested in {name.split(' ')[0]}?</p>
-                        <p className="text-green-100 text-sm mb-4">Send a request — it's free and takes 30 seconds.</p>
-                        <button
-                            onClick={() => setShowRequest(true)}
-                            className="bg-white text-green-700 font-medium px-6 py-2 rounded-lg hover:bg-green-50 transition text-sm"
-                        >
-                            Send Request Now
-                        </button>
-                    </div>
+                    {/* ── CTA Banner — hidden from admin ── */}
+                    {user?.role !== 'admin' && (
+                        <div className="bg-green-600 rounded-xl p-6 text-white text-center">
+                            <p className="font-semibold text-lg mb-1">Interested in {name.split(' ')[0]}?</p>
+                            <p className="text-green-100 text-sm mb-4">Send a request — it's free and takes 30 seconds.</p>
+                            <button
+                                onClick={() => setShowRequest(true)}
+                                className="bg-white text-green-700 font-medium px-6 py-2 rounded-lg hover:bg-green-50 transition text-sm"
+                            >
+                                Send Request Now
+                            </button>
+                        </div>
+                    )}
 
                 </div>
             </div>

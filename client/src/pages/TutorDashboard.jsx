@@ -243,10 +243,16 @@ const MyStudentsTab = () => {
                     </h3>
                     <div className="grid gap-3">
                         {rejected.map(lead => (
-                            <div key={lead._id} className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-400 opacity-70">
+                            <div key={lead._id} className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-400">
                                 <p className="font-semibold text-gray-800">{lead.subject} — {lead.level}</p>
                                 <p className="text-sm text-gray-500 mb-2">{lead.board} · {lead.area}</p>
-                                <p className="text-sm text-red-600">Payment was rejected. Please contact admin.</p>
+                                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-2">
+                                    <p className="text-sm font-medium text-red-700">❌ Payment Rejected</p>
+                                    <p className="text-sm text-red-600 mt-0.5">
+                                        {lead.rejectionReason || 'Payment could not be verified. Please resubmit with a clearer screenshot.'}
+                                    </p>
+                                    <p className="text-xs text-red-400 mt-1">You can unlock this lead again by submitting a new payment.</p>
+                                </div>
                             </div>
                         ))}
                     </div>

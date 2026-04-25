@@ -8,6 +8,7 @@ const paymentSchema = new mongoose.Schema({
     proofUrl: { type: String },
     transactionId: { type: String },
     status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+    rejectionReason: { type: String, default: '' },
     verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now }
 });
